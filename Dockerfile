@@ -47,6 +47,9 @@ RUN pip install -r requirements.txt
 # Install Playwright browsers into the specified path
 RUN playwright install chromium
 
+# Remove FFMPEG to save space and potentially memory, as it's often not needed for basic headless operations
+RUN rm -rf /ms-playwright/ffmpeg*
+
 # Copy the rest of your application code
 COPY . .
 
