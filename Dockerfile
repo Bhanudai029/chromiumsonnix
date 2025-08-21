@@ -1,5 +1,5 @@
 # Use a Python base image suitable for Playwright
-FROM python:3.9-slim-buster
+FROM python:3.9-slim-bullseye
 
 # Set environment variables for Playwright
 ENV PIP_NO_CACHE_DIR=1 \
