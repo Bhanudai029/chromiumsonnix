@@ -1,7 +1,7 @@
 import logging
-import subprocess
 import os
 from flask import Flask, render_template, jsonify
+from playwright.sync_api import sync_playwright, Playwright
 
 # Configure logging for Render.com
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -16,64 +16,38 @@ def index():
 @app.route('/launch')
 def launch_chromium():
     try:
-        logging.info("Attempting to launch Chromium...")
-        # Try different Chromium binary names and ensure --no-sandbox for Render.com
-        chromium_commands = [
-            ['/opt/render/project/chromium/chrome', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
-            ['chromium-browser', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
-            ['chromium', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
-            ['google-chrome', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
-            ['chrome', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222']
-        ]
+        logging.info("Attempting to launch Chromium via Playwright...")
         
-        launched = False
-        for cmd in chromium_commands:
-            try:
-                logging.info(f"Trying command: {' '.join(cmd)}")
-                # Launch in background, detach from parent process, redirect stdout/stderr to avoid blocking
-                # Using preexec_fn=os.setsid on Linux to detach process group
-                process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, preexec_fn=os.setsid)
-                logging.info(f"Chromium process started with PID: {process.pid}")
-                launched = True
-                break
-            except FileNotFoundError:
-                logging.warning(f"Chromium binary not found with command: {' '.join(cmd)}")
-                continue
-            except Exception as e:
-                logging.error(f"Error launching Chromium with command {' '.join(cmd)}: {e}")
-                continue
-        
-        if launched:
-            logging.info('Chromium launched successfully!')
-            return jsonify({'status': 'success', 'message': 'Chromium launched successfully!'})
-        else:
-            logging.error('Could not find or launch any Chromium binary.')
-            return jsonify({'status': 'error', 'message': 'Could not find Chromium binary'})
+        # Use sync_playwright to launch a headless Chromium browser
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
+            # You can perform some basic action to confirm launch, e.g., open a new page
+            page = browser.new_page()
+            page.goto("about:blank") # Load a blank page
+            browser.close()
+
+        logging.info('Chromium launched successfully via Playwright!')
+        return jsonify({'status': 'success', 'message': 'Chromium launched successfully!'})
             
     except Exception as e:
-        logging.critical(f"Unhandled exception during Chromium launch: {e}", exc_info=True)
+        logging.critical(f"Unhandled exception during Chromium launch via Playwright: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/status')
 def get_status():
     try:
-        logging.info("Checking Chromium status...")
-        # Check if Chromium is running using pgrep
-        # Use a more specific pattern to avoid false positives
-        result = subprocess.run(['pgrep', '-f', 'chromium-browser|chromium|google-chrome|chrome'], capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            logging.info('Chromium is running.')
-            return jsonify({'status': 'running', 'message': 'Chromium is running'})
-        else:
-            logging.info('Chromium is not running.')
-            return jsonify({'status': 'stopped', 'message': 'Chromium is not running'})
-    except FileNotFoundError:
-        logging.error("pgrep command not found. Cannot check Chromium status.")
-        return jsonify({'status': 'error', 'message': 'pgrep command not found, cannot check status'})
+        logging.info("Checking Playwright Chromium status...")
+        # Playwright does not expose a direct way to check if a browser is *running* outside its context
+        # Instead, we will try to launch a new, very quick headless browser instance.
+        # If it succeeds, it implies the Playwright Chromium is functional.
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, timeout=5000, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
+            browser.close()
+        logging.info('Playwright Chromium is functional (status check passed).')
+        return jsonify({'status': 'running', 'message': 'Chromium is functional'})
     except Exception as e:
-        logging.critical(f"Unhandled exception during status check: {e}", exc_info=True)
-        return jsonify({'status': 'error', 'message': str(e)})
+        logging.warning(f"Playwright Chromium status check failed: {e}")
+        return jsonify({'status': 'stopped', 'message': 'Chromium is not functional or check failed: ' + str(e)})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
