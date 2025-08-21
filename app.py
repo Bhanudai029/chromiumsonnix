@@ -19,7 +19,7 @@ def launch_chromium():
         logging.info("Attempting to launch Chromium via Playwright...")
         
         # Use sync_playwright to launch a headless Chromium browser
-        chromium_executable_path = "/opt/render/.cache/ms-playwright/chromium-1181/chrome-linux/chrome"
+        chromium_executable_path = "/opt/render/.cache/ms-playwright/chromium_headless_shell-1181/chrome-linux/headless_shell"
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, executable_path=chromium_executable_path, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
             # You can perform some basic action to confirm launch, e.g., open a new page
@@ -41,7 +41,7 @@ def get_status():
         # Playwright does not expose a direct way to check if a browser is *running* outside its context
         # Instead, we will try to launch a new, very quick headless browser instance.
         # If it succeeds, it implies the Playwright Chromium is functional.
-        chromium_executable_path = "/opt/render/.cache/ms-playwright/chromium-1181/chrome-linux/chrome"
+        chromium_executable_path = "/opt/render/.cache/ms-playwright/chromium_headless_shell-1181/chrome-linux/headless_shell"
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, timeout=5000, executable_path=chromium_executable_path, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
             browser.close()
