@@ -57,15 +57,50 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        body.dark-mode .container {
+            background: #2c2c2c;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        body.dark-mode button {
+            background-color: #6200ee;
+        }
+        body.dark-mode button:hover {
+            background-color: #3700b3;
+        }
+        body.dark-mode .status {
+            border-color: #555;
+        }
+        body.dark-mode .success {
+            background-color: #4CAF50;
+            color: #fff;
+            border: 1px solid #388E3C;
+        }
+        body.dark-mode .error {
+            background-color: #D32F2F;
+            color: #fff;
+            border: 1px solid #B71C1C;
+        }
+        body.dark-mode .info {
+            background-color: #2196F3;
+            color: #fff;
+            border: 1px solid #1976D2;
+        }
     </style>
 </head>
-<body>
+<body class="dark-mode">
     <div class="container">
         <h1>🚀 Chromium Launcher</h1>
         <p>Launch a lightweight Chromium browser instance</p>
         
         <button id="launchBtn" onclick="launchChromium()">Launch Chromium</button>
         <button id="statusBtn" onclick="checkStatus()">Check Status</button>
+        <button id="darkModeToggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
         
         <div id="statusArea" class="status info">
             Ready to launch Chromium
@@ -73,6 +108,36 @@
     </div>
 
     <script>
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            // Save preference to localStorage
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        // Apply dark mode preference on page load
+        window.onload = function() {
+            // Set dark mode as default if no preference is saved
+            if (localStorage.getItem('darkMode') === null) {
+                localStorage.setItem('darkMode', 'enabled');
+            }
+
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            } else {
+                // Ensure it's not dark mode if disabled preference is found
+                document.body.classList.remove('dark-mode');
+            }
+            // Initialize buttons and status area after loading preference
+            launchChromium(); // Or just update the initial state if needed
+            checkStatus(); // Initial status check
+        };
+        
         function launchChromium() {
             const launchBtn = document.getElementById('launchBtn');
             const statusArea = document.getElementById('statusArea');
