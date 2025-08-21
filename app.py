@@ -19,6 +19,7 @@ def launch_chromium():
         logging.info("Attempting to launch Chromium...")
         # Try different Chromium binary names and ensure --no-sandbox for Render.com
         chromium_commands = [
+            ['/opt/render/project/chromium/chrome', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
             ['chromium-browser', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
             ['chromium', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
             ['google-chrome', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--remote-debugging-port=9222'],
