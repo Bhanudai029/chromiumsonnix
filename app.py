@@ -125,16 +125,16 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait EXACTLY 20 seconds - DO NOTHING, just stay on the page
+            # Wait EXACTLY 30 seconds - DO NOTHING, just stay on the page
             import time
             start_time = time.time()
-            logging.info("⏳ STARTING 20-SECOND WAIT - Staying on ezconv.com, doing NOTHING else...")
-            page.wait_for_timeout(20000)  # Browser waits 20 seconds
+            logging.info("⏳ STARTING 30-SECOND WAIT - Staying on ezconv.com, doing NOTHING else...")
+            page.wait_for_timeout(30000)  # Browser waits 30 seconds
             elapsed_time = time.time() - start_time
-            logging.info(f"✅ 20-SECOND WAIT COMPLETE! Actual time elapsed: {elapsed_time:.2f} seconds")
+            logging.info(f"✅ 30-SECOND WAIT COMPLETE! Actual time elapsed: {elapsed_time:.2f} seconds")
             
             # NOW take the screenshot of whatever is on the page
-            logging.info("📸 Taking screenshot NOW (after full 20 seconds)...")
+            logging.info("📸 Taking screenshot NOW (after full 30 seconds)...")
             screenshot_bytes = page.screenshot(
                 full_page=False,
                 timeout=20000  # 20 second timeout for screenshot rendering
