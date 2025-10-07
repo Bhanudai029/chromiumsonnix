@@ -1,6 +1,8 @@
 import logging
 import os
 import base64
+import asyncio
+from threading import Semaphore
 from flask import Flask, render_template, jsonify, request
 from playwright.sync_api import sync_playwright, Playwright
 
@@ -8,6 +10,9 @@ from playwright.sync_api import sync_playwright, Playwright
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
+
+# Semaphore to allow only 1 conversion at a time (prevents memory bloat)
+conversion_semaphore = Semaphore(1)
 
 @app.route('/')
 def index():
@@ -34,6 +39,11 @@ def launch_chromium():
 
 @app.route('/navigate', methods=['POST'])
 def navigate_to_url():
+    # Use semaphore to ensure only 1 conversion at a time
+    if not conversion_semaphore.acquire(blocking=False):
+        logging.warning("Conversion already in progress, rejecting new request")
+        return jsonify({'status': 'error', 'message': 'A conversion is already in progress. Please wait.'})
+    
     try:
         data = request.get_json()
         url = data.get('url', '')
@@ -45,7 +55,7 @@ def navigate_to_url():
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
         
-        logging.info(f"Processing URL: {url} on ezconv.com")
+        logging.info(f"Processing URL: {url} on ezconv.com (semaphore acquired)")
         
         with sync_playwright() as p:
             # Launch with aggressive memory-saving flags (lowest possible footprint)
@@ -118,10 +128,18 @@ def navigate_to_url():
             # Convert screenshot to base64
             screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
             
-            # Explicit cleanup
-            page.close()
-            browser.close()
-            logging.info("Browser closed, memory cleaned up")
+            # Explicit cleanup - ensure resources are freed even if errors occur
+            try:
+                page.close()
+                logging.info("Page closed")
+            except Exception as cleanup_error:
+                logging.warning(f"Error closing page: {cleanup_error}")
+            
+            try:
+                browser.close()
+                logging.info("Browser closed, memory cleaned up")
+            except Exception as cleanup_error:
+                logging.warning(f"Error closing browser: {cleanup_error}")
         
         logging.info(f'Successfully processed {url} on ezconv.com and captured screenshot')
         return jsonify({
@@ -133,6 +151,10 @@ def navigate_to_url():
     except Exception as e:
         logging.error(f"Error during navigation: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)})
+    finally:
+        # Always release the semaphore
+        conversion_semaphore.release()
+        logging.info("Semaphore released, ready for next conversion")
 
 @app.route('/status')
 def get_status():
