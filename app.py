@@ -145,6 +145,7 @@ def navigate_to_url():
             # Check for download button after 30 seconds
             download_button_found = False
             download_button_clickable = False
+            audio_file_base64 = None
             download_button_xpath = '//*[@id="downloadButton"]'
             
             try:
@@ -161,6 +162,35 @@ def navigate_to_url():
                         if download_button.is_enabled():
                             download_button_clickable = True
                             logging.info("✅ Download button is clickable!")
+                            
+                            # Set up download handling
+                            logging.info("🎵 Starting download...")
+                            with page.expect_download(timeout=60000) as download_info:
+                                download_button.click()
+                            
+                            download = download_info.value
+                            logging.info(f"📥 Download started: {download.suggested_filename}")
+                            
+                            # Save to temporary location and read
+                            import tempfile
+                            temp_dir = tempfile.gettempdir()
+                            download_path = os.path.join(temp_dir, download.suggested_filename)
+                            download.save_as(download_path)
+                            logging.info(f"💾 File saved to: {download_path}")
+                            
+                            # Read the file and convert to base64
+                            with open(download_path, 'rb') as audio_file:
+                                audio_bytes = audio_file.read()
+                                audio_file_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                                logging.info(f"✅ Audio file encoded! Size: {len(audio_bytes)} bytes")
+                            
+                            # Clean up temp file
+                            try:
+                                os.remove(download_path)
+                                logging.info("🗑️ Temporary file cleaned up")
+                            except:
+                                pass
+                                
                         else:
                             logging.info("❌ Download button found but NOT clickable")
                     except Exception as click_check_error:
@@ -253,7 +283,8 @@ def navigate_to_url():
             'message': status_message,
             'screenshot': screenshot_base64,
             'download_button_found': download_button_found,
-            'download_button_clickable': download_button_clickable
+            'download_button_clickable': download_button_clickable,
+            'audio_file': audio_file_base64
         })
             
     except Exception as e:

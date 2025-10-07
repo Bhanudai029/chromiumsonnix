@@ -178,6 +178,37 @@
         body.dark-mode .screenshot-container img {
             border-color: #555;
         }
+        
+        .audio-player-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .audio-player-container.show {
+            display: block;
+        }
+        
+        body.dark-mode .audio-player-container {
+            background: #1e1e1e;
+        }
+        
+        .audio-player-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        body.dark-mode .audio-player-container h3 {
+            color: #f0f0f0;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
 
         /* Fade-out animation */
         .fade-out {
@@ -230,6 +261,13 @@
                     onkeypress="handleKeyPress(event)" />
                 <button onclick="navigateToUrl()">Go</button>
             </div>
+        </div>
+
+        <div id="audioPlayerContainer" class="audio-player-container">
+            <h3>🎵 Downloaded Audio:</h3>
+            <audio id="audioPlayer" controls>
+                Your browser does not support the audio element.
+            </audio>
         </div>
 
         <div id="screenshotContainer" class="screenshot-container">
@@ -358,6 +396,8 @@
             const statusArea = document.getElementById('statusArea');
             const screenshotContainer = document.getElementById('screenshotContainer');
             const screenshotImg = document.getElementById('screenshot');
+            const audioPlayerContainer = document.getElementById('audioPlayerContainer');
+            const audioPlayer = document.getElementById('audioPlayer');
             const url = urlInput.value.trim();
 
             if (!url) {
@@ -379,6 +419,7 @@
             statusArea.className = 'status info';
             statusArea.textContent = '🌐 Opening youconvert.org...';
             screenshotContainer.classList.remove('show');
+            audioPlayerContainer.classList.remove('show');
 
             // Start countdown after a short delay (to simulate steps)
             let step = 0;
@@ -454,6 +495,13 @@
                         screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
                         screenshotContainer.classList.add('show');
                         
+                        // Display audio player if audio file is available
+                        if (data.audio_file) {
+                            audioPlayer.src = 'data:audio/mpeg;base64,' + data.audio_file;
+                            audioPlayerContainer.classList.add('show');
+                            console.log('🎵 Audio player loaded with downloaded file');
+                        }
+                        
                         // Set status based on download button findings and show for 20 seconds
                         let resultMessage = '';
                         let resultClass = '';
@@ -462,6 +510,9 @@
                             if (data.download_button_clickable) {
                                 resultClass = 'status success';
                                 resultMessage = '✅ Download button found and visible!\n✅ Download button is clickable!';
+                                if (data.audio_file) {
+                                    resultMessage += '\n🎵 Audio downloaded successfully!';
+                                }
                             } else {
                                 resultClass = 'status warning';
                                 resultMessage = '✅ Download button found and visible!\n❌ Download button found but NOT clickable';
@@ -496,6 +547,7 @@
                         statusArea.className = 'status error';
                         statusArea.textContent = '❌ Error: ' + data.message;
                         screenshotContainer.classList.remove('show');
+                        audioPlayerContainer.classList.remove('show');
                         isConverting = false;
                         startStatusChecking();
                     }
@@ -512,6 +564,7 @@
                     statusArea.className = 'status error';
                     statusArea.textContent = '❌ Network error: ' + error.message;
                     screenshotContainer.classList.remove('show');
+                    audioPlayerContainer.classList.remove('show');
                     isConverting = false;
                     startStatusChecking();
                 });
