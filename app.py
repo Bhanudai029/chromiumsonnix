@@ -1,6 +1,7 @@
 import logging
 import os
-from flask import Flask, render_template, jsonify
+import base64
+from flask import Flask, render_template, jsonify, request
 from playwright.sync_api import sync_playwright, Playwright
 
 # Configure logging for Render.com
@@ -31,6 +32,50 @@ def launch_chromium():
             
     except Exception as e:
         logging.critical(f"Unhandled exception during Chromium launch via Playwright: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/navigate', methods=['POST'])
+def navigate_to_url():
+    try:
+        data = request.get_json()
+        url = data.get('url', '')
+        
+        if not url:
+            return jsonify({'status': 'error', 'message': 'No URL provided'})
+        
+        # Add https:// if no protocol is specified
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
+        logging.info(f"Navigating to URL: {url}")
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True, 
+                args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+            )
+            page = browser.new_page()
+            
+            # Navigate to the URL and wait for the page to load
+            page.goto(url, wait_until='networkidle', timeout=30000)
+            
+            # Take a screenshot
+            screenshot_bytes = page.screenshot(full_page=False)
+            
+            # Convert screenshot to base64
+            screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
+            
+            browser.close()
+        
+        logging.info(f'Successfully navigated to {url} and captured screenshot')
+        return jsonify({
+            'status': 'success', 
+            'message': f'Successfully navigated to {url}',
+            'screenshot': screenshot_base64
+        })
+            
+    except Exception as e:
+        logging.error(f"Error during navigation: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/status')
