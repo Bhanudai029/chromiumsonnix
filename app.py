@@ -163,33 +163,27 @@ def navigate_to_url():
                             download_button_clickable = True
                             logging.info("✅ Download button is clickable!")
                             
-                            # Set up download handling
-                            logging.info("🎵 Starting download...")
-                            with page.expect_download(timeout=60000) as download_info:
-                                download_button.click()
-                            
-                            download = download_info.value
-                            logging.info(f"📥 Download started: {download.suggested_filename}")
-                            
-                            # Save to temporary location and read
-                            import tempfile
-                            temp_dir = tempfile.gettempdir()
-                            download_path = os.path.join(temp_dir, download.suggested_filename)
-                            download.save_as(download_path)
-                            logging.info(f"💾 File saved to: {download_path}")
-                            
-                            # Read the file and convert to base64
-                            with open(download_path, 'rb') as audio_file:
-                                audio_bytes = audio_file.read()
-                                audio_file_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-                                logging.info(f"✅ Audio file encoded! Size: {len(audio_bytes)} bytes")
-                            
-                            # Clean up temp file
+                            # Try to get the download URL from href attribute
                             try:
-                                os.remove(download_path)
-                                logging.info("🗑️ Temporary file cleaned up")
-                            except:
-                                pass
+                                download_url = download_button.get_attribute('href')
+                                if download_url:
+                                    logging.info(f"🎵 Found download URL: {download_url[:100]}...")
+                                    
+                                    # Download using requests
+                                    import requests
+                                    logging.info("📥 Downloading audio file...")
+                                    response = requests.get(download_url, timeout=60)
+                                    
+                                    if response.status_code == 200:
+                                        audio_bytes = response.content
+                                        audio_file_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                                        logging.info(f"✅ Audio file downloaded and encoded! Size: {len(audio_bytes)} bytes")
+                                    else:
+                                        logging.warning(f"❌ Download failed with status code: {response.status_code}")
+                                else:
+                                    logging.info("⚠️ No href attribute found, button might trigger JS download")
+                            except Exception as download_error:
+                                logging.warning(f"⚠️ Could not download via href: {download_error}")
                                 
                         else:
                             logging.info("❌ Download button found but NOT clickable")
