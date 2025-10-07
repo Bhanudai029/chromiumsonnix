@@ -303,7 +303,7 @@
                 { time: 1500, message: '🔍 Locating input field...' },
                 { time: 3000, message: '✍️ Entering URL: ' + url },
                 { time: 4500, message: '🖱️ Clicking convert button...' },
-                { time: 6000, message: '⏳ Waiting 20s, then checking for Download button...' }
+                { time: 6000, message: '🔍 Checking for Download button every 2 seconds (1 minute max)...' }
             ];
             
             // Show step-by-step progress
@@ -313,17 +313,15 @@
                 }, s.time);
             });
             
-            // Start with initial 20-second wait, then checking phase
-            let countdown = 20;
-            let checkingPhase = false;
+            // Show checking status (60 seconds max, checking every 2 seconds)
+            let elapsed = 0;
+            let maxTime = 60;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
-                    if (countdown > 0) {
-                        statusArea.textContent = '⚡ Converting... ' + countdown + ' seconds remaining';
-                        countdown--;
-                    } else if (!checkingPhase) {
-                        checkingPhase = true;
-                        statusArea.textContent = '🔍 Checking for Download button every 5 seconds...';
+                    if (elapsed < maxTime) {
+                        elapsed += 1;
+                        let checkNumber = Math.floor(elapsed / 2) + 1;
+                        statusArea.textContent = `🔍 Checking for Download button... (${elapsed}s / ${maxTime}s - Check #${checkNumber})`;
                     }
                 }, 1000);
             }, 6000);
@@ -344,10 +342,16 @@
                 }
                 
                 if (data.status === 'success') {
-                    statusArea.className = 'status success';
-                    statusArea.textContent = '✅ ' + data.message;
+                    // Show permanent success or failure message based on download_button_found
+                    if (data.download_button_found) {
+                        statusArea.className = 'status success';
+                        statusArea.textContent = '✅ SUCCESS! Download button appeared and screenshot captured!';
+                    } else {
+                        statusArea.className = 'status error';
+                        statusArea.textContent = '❌ UNSUCCESSFUL! Download button did NOT appear (screenshot captured anyway)';
+                    }
                     
-                    // Display the screenshot
+                    // Display the screenshot regardless
                     screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
                     screenshotContainer.classList.add('show');
                 } else {

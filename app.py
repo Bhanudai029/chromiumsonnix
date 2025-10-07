@@ -125,20 +125,16 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait 20 seconds initially, then check for Download button
+            # Check for Download MP3 button every 2 seconds for 1 minute (60 seconds)
             import time
-            logging.info("⏳ Waiting 20 seconds initially for conversion to start...")
-            page.wait_for_timeout(20000)
-            
-            # Now check for Download MP3 button every 5 seconds (max 40 seconds total)
             download_button_xpath = "//button[normalize-space()='Download MP3']"
-            max_wait = 40  # Maximum 40 seconds total
-            check_interval = 5  # Check every 5 seconds
+            max_wait = 60  # Maximum 60 seconds (1 minute)
+            check_interval = 2  # Check every 2 seconds
             
             start_time = time.time()
             button_found = False
             
-            logging.info("🔍 Starting to check for Download MP3 button every 5 seconds...")
+            logging.info("🔍 Starting to check for Download MP3 button every 2 seconds (max 1 minute)...")
             
             for attempt in range(1, (max_wait // check_interval) + 1):
                 try:
@@ -148,18 +144,18 @@ def navigate_to_url():
                     # Check if button is visible
                     if download_button.is_visible(timeout=100):
                         elapsed_time = time.time() - start_time
-                        logging.info(f"✅ Download button appeared successfully! (After {20 + elapsed_time:.1f} seconds total)")
+                        logging.info(f"✅ SUCCESS! Download button appeared! (After {elapsed_time:.1f} seconds)")
                         button_found = True
                         break
                 except:
                     # Button not found yet
                     elapsed = time.time() - start_time
-                    logging.info(f"⏳ Check #{attempt}: Download button not visible yet... (waited {elapsed:.1f}s so far)")
-                    page.wait_for_timeout(check_interval * 1000)  # Wait 5 more seconds
+                    logging.info(f"⏳ Check #{attempt}/{max_wait // check_interval}: Download button not visible yet... ({elapsed:.1f}s elapsed)")
+                    page.wait_for_timeout(check_interval * 1000)  # Wait 2 more seconds
             
             if not button_found:
                 total_elapsed = time.time() - start_time
-                logging.warning(f"⚠️ Download button did not appear after {20 + total_elapsed:.1f} seconds total")
+                logging.error(f"❌ UNSUCCESSFUL! Download button did NOT appear after {total_elapsed:.1f} seconds")
             
             # NOW take the screenshot of whatever is on the page
             logging.info("📸 Taking screenshot NOW...")
@@ -188,16 +184,23 @@ def navigate_to_url():
                 logging.warning(f"Error closing context: {cleanup_error}")
             
             try:
-                browser.close()
+            browser.close()
                 logging.info("Browser closed, memory cleaned up")
             except Exception as cleanup_error:
                 logging.warning(f"Error closing browser: {cleanup_error}")
         
-        logging.info(f'Successfully processed {url} on ezconv.com and captured screenshot')
+        # Prepare response with Download button status
+        if button_found:
+            status_message = f'✅ SUCCESS! Download button appeared and screenshot captured!'
+        else:
+            status_message = f'❌ UNSUCCESSFUL! Download button did NOT appear (screenshot captured anyway)'
+        
+        logging.info(f'Processed {url} on ezconv.com - Button found: {button_found}')
         return jsonify({
             'status': 'success', 
-            'message': f'Successfully processed {url} on ezconv.com',
-            'screenshot': screenshot_base64
+            'message': status_message,
+            'screenshot': screenshot_base64,
+            'download_button_found': button_found
         })
             
     except Exception as e:
