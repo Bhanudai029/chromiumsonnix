@@ -26,9 +26,9 @@ def launch_chromium():
         
         # Don't actually launch browser here - just return success to save memory
         # The actual browser will only launch when user submits a URL
-        logging.info('Ready to process URLs on youconvert.org!')
+        logging.info('Ready to process URLs on ezconv.com!')
         return jsonify({
-            'status': 'success',
+            'status': 'success', 
             'message': 'Ready to convert! Enter a URL to start.',
             'screenshot': None
         })
@@ -99,39 +99,63 @@ def navigate_to_url():
                 else route.continue_()
             ))
             
-            # Navigate to youconvert.org first (increased timeout for slow loads)
-            logging.info("Navigating to youconvert.org...")
-            page.goto("https://youconvert.org/", wait_until='domcontentloaded', timeout=60000)
+            # Navigate to ezconv.com first (increased timeout for slow loads)
+            logging.info("Navigating to ezconv.com...")
+            page.goto("https://ezconv.com", wait_until='domcontentloaded', timeout=60000)
             
             # Wait a bit for any dynamic content to load (reduced from 2s to 1s)
             page.wait_for_timeout(1000)
             
             # Find and click the input box using XPath
             logging.info("Clicking on input box...")
-            input_xpath = "//input[@id='youtube-url']"
+            input_xpath = "//input[@id=':R6d6jalffata:']"
             input_element = page.locator(f"xpath={input_xpath}")
             input_element.click()
-
+            
             # Fill in the URL
             logging.info(f"Filling in URL: {url}")
             input_element.fill(url)
-
+            
             # Wait a moment before clicking convert (reduced from 1s to 500ms)
             page.wait_for_timeout(500)
-
+            
             # Click the convert button using XPath
             logging.info("Clicking convert button...")
-            convert_button_xpath = "//button[@id='convertButton']"
+            convert_button_xpath = "//button[@id=':R1ajalffata:']"
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait exactly 30 seconds for conversion to complete
+            # Check for Download MP3 button every 2 seconds for 1 minute (60 seconds)
             import time
+            download_button_xpath = "//button[normalize-space()='Download MP3']"
+            max_wait = 60  # Maximum 60 seconds (1 minute)
+            check_interval = 2  # Check every 2 seconds
+            
             start_time = time.time()
-            logging.info("⏳ Starting 30-second wait for conversion to complete...")
-            page.wait_for_timeout(30000)  # Wait 30 seconds
-            elapsed_time = time.time() - start_time
-            logging.info(f"✅ 30-second wait complete! Actual time elapsed: {elapsed_time:.2f} seconds")
+            button_found = False
+            
+            logging.info("🔍 Starting to check for Download MP3 button every 2 seconds (max 1 minute)...")
+            
+            for attempt in range(1, (max_wait // check_interval) + 1):
+                try:
+                    # Try to find the Download MP3 button
+                    download_button = page.locator(f"xpath={download_button_xpath}")
+                    
+                    # Check if button is visible
+                    if download_button.is_visible(timeout=100):
+                        elapsed_time = time.time() - start_time
+                        logging.info(f"✅ SUCCESS! Download button appeared! (After {elapsed_time:.1f} seconds)")
+                        button_found = True
+                        break
+                except:
+                    # Button not found yet
+                    elapsed = time.time() - start_time
+                    logging.info(f"⏳ Check #{attempt}/{max_wait // check_interval}: Download button not visible yet... ({elapsed:.1f}s elapsed)")
+                    page.wait_for_timeout(check_interval * 1000)  # Wait 2 more seconds
+            
+            if not button_found:
+                total_elapsed = time.time() - start_time
+                logging.error(f"❌ UNSUCCESSFUL! Download button did NOT appear after {total_elapsed:.1f} seconds")
             
             # NOW take the screenshot of whatever is on the page
             logging.info("📸 Taking screenshot NOW...")
@@ -165,11 +189,18 @@ def navigate_to_url():
             except Exception as cleanup_error:
                 logging.warning(f"Error closing browser: {cleanup_error}")
         
-        logging.info(f'Successfully processed {url} on youconvert.org and captured screenshot')
+        # Prepare response with Download button status
+        if button_found:
+            status_message = f'✅ SUCCESS! Download button appeared and screenshot captured!'
+        else:
+            status_message = f'❌ UNSUCCESSFUL! Download button did NOT appear (screenshot captured anyway)'
+        
+        logging.info(f'Processed {url} on ezconv.com - Button found: {button_found}')
         return jsonify({
-            'status': 'success',
-            'message': f'Successfully processed {url} on youconvert.org',
-            'screenshot': screenshot_base64
+            'status': 'success', 
+            'message': status_message,
+            'screenshot': screenshot_base64,
+            'download_button_found': button_found
         })
             
     except Exception as e:

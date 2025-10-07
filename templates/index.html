@@ -147,8 +147,8 @@
 </head>
 <body class="dark-mode">
     <div class="container">
-        <h1>🚀 Chromium Launcher</h1>
-        <p>Launch a lightweight Chromium browser instance</p>
+        <h1>🚀 YouConvert.org Launcher</h1>
+        <p>Convert YouTube videos to MP3 using youconvert.org</p>
         
         <button id="launchBtn" onclick="launchChromium()">Launch Chromium</button>
         <button id="statusBtn" onclick="checkStatus()">Check Status</button>
@@ -299,29 +299,27 @@
             // Start countdown after a short delay (to simulate steps)
             let step = 0;
             const steps = [
-                { time: 0, message: '🌐 Opening ezconv.com (memory-optimized mode)...' },
+                { time: 0, message: '🌐 Opening youconvert.org (memory-optimized mode)...' },
                 { time: 1500, message: '🔍 Locating input field...' },
                 { time: 3000, message: '✍️ Entering URL: ' + url },
                 { time: 4500, message: '🖱️ Clicking convert button...' },
-                { time: 6000, message: '🔍 Checking for Download button every 2 seconds (1 minute max)...' }
+                { time: 6000, message: '⏳ Processing conversion (30 seconds)...' }
             ];
-            
+
             // Show step-by-step progress
             steps.forEach(s => {
                 setTimeout(() => {
                     statusArea.textContent = s.message;
                 }, s.time);
             });
-            
-            // Show checking status (60 seconds max, checking every 2 seconds)
-            let elapsed = 0;
-            let maxTime = 60;
+
+            // Show countdown (30 seconds)
+            let countdown = 30;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
-                    if (elapsed < maxTime) {
-                        elapsed += 1;
-                        let checkNumber = Math.floor(elapsed / 2) + 1;
-                        statusArea.textContent = `🔍 Checking for Download button... (${elapsed}s / ${maxTime}s - Check #${checkNumber})`;
+                    if (countdown > 0) {
+                        statusArea.textContent = '⚡ Converting... ' + countdown + ' seconds remaining';
+                        countdown--;
                     }
                 }, 1000);
             }, 6000);
@@ -340,18 +338,12 @@
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                 }
-                
+
                 if (data.status === 'success') {
-                    // Show permanent success or failure message based on download_button_found
-                    if (data.download_button_found) {
-                        statusArea.className = 'status success';
-                        statusArea.textContent = '✅ SUCCESS! Download button appeared and screenshot captured!';
-                    } else {
-                        statusArea.className = 'status error';
-                        statusArea.textContent = '❌ UNSUCCESSFUL! Download button did NOT appear (screenshot captured anyway)';
-                    }
-                    
-                    // Display the screenshot regardless
+                    statusArea.className = 'status success';
+                    statusArea.textContent = '✅ ' + data.message;
+
+                    // Display the screenshot
                     screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
                     screenshotContainer.classList.add('show');
                 } else {
