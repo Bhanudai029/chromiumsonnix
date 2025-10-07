@@ -47,6 +47,7 @@
             padding: 15px;
             border-radius: 5px;
             font-weight: bold;
+            white-space: pre-line; /* Allow line breaks in text */
         }
 
         .success {
@@ -426,23 +427,46 @@
                     statusArea.classList.remove('fade-out', 'fading', 'pulse');
 
                     if (data.status === 'success') {
-                        // Set status based on download button findings
-                        if (data.download_button_found) {
-                            if (data.download_button_clickable) {
-                                statusArea.className = 'status success';
-                                statusArea.textContent = '✅ SUCCESS! Download button found and clickable!';
-                            } else {
-                                statusArea.className = 'status warning';
-                                statusArea.textContent = '⚠️ Download button found but NOT clickable';
-                            }
-                        } else {
-                            statusArea.className = 'status error';
-                            statusArea.textContent = '❌ Download button NOT found';
-                        }
-
-                        // Display the screenshot
+                        // Display the screenshot first
                         screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
                         screenshotContainer.classList.add('show');
+                        
+                        // Set status based on download button findings and show for 20 seconds
+                        let resultMessage = '';
+                        let resultClass = '';
+                        
+                        if (data.download_button_found) {
+                            if (data.download_button_clickable) {
+                                resultClass = 'status success';
+                                resultMessage = '✅ Download button found and visible!\n✅ Download button is clickable!';
+                            } else {
+                                resultClass = 'status warning';
+                                resultMessage = '✅ Download button found and visible!\n❌ Download button found but NOT clickable';
+                            }
+                        } else {
+                            resultClass = 'status error';
+                            resultMessage = '❌ Download button NOT found';
+                        }
+                        
+                        // Show the result message
+                        statusArea.className = resultClass;
+                        statusArea.textContent = resultMessage;
+                        
+                        // After 18 seconds, start fade-out (2 seconds fade + 18 seconds display = 20 seconds total)
+                        setTimeout(() => {
+                            statusArea.classList.add('fade-out');
+                            setTimeout(() => {
+                                statusArea.classList.add('fading');
+                                
+                                // After fade completes, show "Chromium is running" status
+                                setTimeout(() => {
+                                    statusArea.classList.remove('fade-out', 'fading');
+                                    statusArea.className = 'status success';
+                                    statusArea.textContent = '✅ Chromium is running';
+                                }, 2000);
+                            }, 100);
+                        }, 18000); // Show for 18 seconds before starting fade
+                        
                     } else {
                         statusArea.className = 'status error';
                         statusArea.textContent = '❌ Error: ' + data.message;
