@@ -82,8 +82,16 @@ def navigate_to_url():
                     '--disable-setuid-sandbox'
                 ]
             )
-            # Create a single page context
-            page = browser.new_page()
+            # Create a single page context with animations disabled
+            context = browser.new_context(
+                viewport={'width': 1280, 'height': 720},
+                locale='en-US',
+                timezone_id='America/New_York',
+                # Disable animations for faster rendering
+                reduced_motion='reduce',
+                force_colors='active'
+            )
+            page = context.new_page()
             
             # Block heavy resource types early - global route before navigation
             logging.info("Setting up global resource blocking to save memory...")
@@ -122,8 +130,12 @@ def navigate_to_url():
             logging.info("Waiting 10 seconds for conversion to complete...")
             page.wait_for_timeout(10000)
             
-            # Take a screenshot
-            screenshot_bytes = page.screenshot(full_page=False)
+            # Take a screenshot with timeout and no font waiting
+            logging.info("Taking screenshot (skipping font loading)...")
+            screenshot_bytes = page.screenshot(
+                full_page=False,
+                timeout=5000  # 5 second timeout instead of default 30s
+            )
             
             # Convert screenshot to base64
             screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
@@ -134,6 +146,12 @@ def navigate_to_url():
                 logging.info("Page closed")
             except Exception as cleanup_error:
                 logging.warning(f"Error closing page: {cleanup_error}")
+            
+            try:
+                context.close()
+                logging.info("Context closed")
+            except Exception as cleanup_error:
+                logging.warning(f"Error closing context: {cleanup_error}")
             
             try:
                 browser.close()
