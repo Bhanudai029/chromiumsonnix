@@ -129,7 +129,16 @@ def navigate_to_url():
             import time
             start_time = time.time()
             logging.info("⏳ Starting 30-second wait for conversion to complete...")
-            page.wait_for_timeout(30000)  # Wait 30 seconds
+            
+            # Wait in 1-second intervals to allow for more responsive logging
+            for i in range(30):
+                page.wait_for_timeout(1000)  # Wait 1 second
+                remaining = 30 - (i + 1)
+                if remaining > 0:
+                    logging.info(f"⏳ Conversion in progress... {remaining} seconds remaining")
+                else:
+                    logging.info("⏳ Conversion time complete, checking for download button...")
+            
             elapsed_time = time.time() - start_time
             logging.info(f"✅ 30-second wait complete! Actual time elapsed: {elapsed_time:.2f} seconds")
             
