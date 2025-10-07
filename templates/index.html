@@ -299,11 +299,11 @@
             // Start countdown after a short delay (to simulate steps)
             let step = 0;
             const steps = [
-                { time: 0, message: '🌐 Opening ezconv.com (blocking images to save memory)...' },
+                { time: 0, message: '🌐 Opening ezconv.com (memory-optimized mode)...' },
                 { time: 1500, message: '🔍 Locating input field...' },
                 { time: 3000, message: '✍️ Entering URL: ' + url },
                 { time: 4500, message: '🖱️ Clicking convert button...' },
-                { time: 6000, message: '⏳ Processing conversion (15 seconds remaining)...' }
+                { time: 6000, message: '⏳ Processing conversion (10 seconds)...' }
             ];
             
             // Show step-by-step progress
@@ -313,12 +313,12 @@
                 }, s.time);
             });
             
-            // Start countdown from 15 seconds after clicking convert
-            let countdown = 15;
+            // Start countdown from 10 seconds after clicking convert
+            let countdown = 10;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
                     if (countdown > 0) {
-                        statusArea.textContent = '⏳ Converting... ' + countdown + ' seconds remaining';
+                        statusArea.textContent = '⚡ Converting... ' + countdown + ' seconds remaining';
                         countdown--;
                     }
                 }, 1000);

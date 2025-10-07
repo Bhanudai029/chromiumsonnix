@@ -118,9 +118,9 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait for conversion to process (15 seconds - reduced from 20)
-            logging.info("Waiting 15 seconds for conversion to complete...")
-            page.wait_for_timeout(15000)
+            # Wait for conversion to process (10 seconds - optimized for speed)
+            logging.info("Waiting 10 seconds for conversion to complete...")
+            page.wait_for_timeout(10000)
             
             # Take a screenshot
             screenshot_bytes = page.screenshot(full_page=False)

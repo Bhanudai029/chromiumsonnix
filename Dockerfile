@@ -57,4 +57,5 @@ COPY . .
 EXPOSE $PORT
 
 # Command to run the Flask application with Gunicorn
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 1
+# Timeout set to 120s to handle 15s conversion + overhead
+CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 1 --timeout 120 --graceful-timeout 120
