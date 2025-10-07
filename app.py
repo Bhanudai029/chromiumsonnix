@@ -148,10 +148,19 @@ def navigate_to_url():
                         button_found = True
                         break
                 except:
-                    # Button not found yet
+                    # Button not found yet - continue checking
+                    pass
+                
+                # Always wait 2 seconds between checks (unless button found)
+                if not button_found:
                     elapsed = time.time() - start_time
                     logging.info(f"⏳ Check #{attempt}/{max_wait // check_interval}: Download button not visible yet... ({elapsed:.1f}s elapsed)")
                     page.wait_for_timeout(check_interval * 1000)  # Wait 2 more seconds
+                    
+                    # Check if we've reached max time
+                    if elapsed >= max_wait:
+                        logging.info(f"⏰ Reached maximum wait time of {max_wait} seconds")
+                        break
             
             if not button_found:
                 total_elapsed = time.time() - start_time
@@ -184,7 +193,7 @@ def navigate_to_url():
                 logging.warning(f"Error closing context: {cleanup_error}")
             
             try:
-                browser.close()
+            browser.close()
                 logging.info("Browser closed, memory cleaned up")
             except Exception as cleanup_error:
                 logging.warning(f"Error closing browser: {cleanup_error}")
