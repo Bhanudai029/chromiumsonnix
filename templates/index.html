@@ -280,6 +280,8 @@
         // Auto-check status every 30 seconds
         setInterval(checkStatus, 30000);
 
+        let countdownInterval = null;
+
         function navigateToUrl() {
             const urlInput = document.getElementById('urlInput');
             const statusArea = document.getElementById('statusArea');
@@ -293,9 +295,43 @@
                 return;
             }
             
+            // Clear any existing countdown
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // Initial status
             statusArea.className = 'status info';
-            statusArea.textContent = '🌐 Processing ' + url + ' on ezconv.com...';
+            statusArea.textContent = '🌐 Opening ezconv.com...';
             screenshotContainer.classList.remove('show');
+            
+            // Start countdown after a short delay (to simulate steps)
+            let step = 0;
+            const steps = [
+                { time: 0, message: '🌐 Opening ezconv.com...' },
+                { time: 2000, message: '🔍 Locating input field...' },
+                { time: 4000, message: '✍️ Entering URL: ' + url },
+                { time: 6000, message: '🖱️ Clicking convert button...' },
+                { time: 8000, message: '⏳ Processing conversion (20 seconds remaining)...' }
+            ];
+            
+            // Show step-by-step progress
+            steps.forEach(s => {
+                setTimeout(() => {
+                    statusArea.textContent = s.message;
+                }, s.time);
+            });
+            
+            // Start countdown from 20 seconds after clicking convert
+            let countdown = 20;
+            setTimeout(() => {
+                countdownInterval = setInterval(() => {
+                    if (countdown > 0) {
+                        statusArea.textContent = '⏳ Converting... ' + countdown + ' seconds remaining';
+                        countdown--;
+                    }
+                }, 1000);
+            }, 8000);
             
             fetch('/navigate', {
                 method: 'POST',
@@ -306,6 +342,12 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Clear countdown
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                
                 if (data.status === 'success') {
                     statusArea.className = 'status success';
                     statusArea.textContent = '✅ ' + data.message;
@@ -320,6 +362,12 @@
                 }
             })
             .catch(error => {
+                // Clear countdown
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                
                 statusArea.className = 'status error';
                 statusArea.textContent = '❌ Network error: ' + error.message;
                 screenshotContainer.classList.remove('show');
