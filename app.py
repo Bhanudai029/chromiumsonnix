@@ -193,7 +193,7 @@ def navigate_to_url():
                 logging.warning(f"Error closing context: {cleanup_error}")
             
             try:
-            browser.close()
+                browser.close()
                 logging.info("Browser closed, memory cleaned up")
             except Exception as cleanup_error:
                 logging.warning(f"Error closing browser: {cleanup_error}")
