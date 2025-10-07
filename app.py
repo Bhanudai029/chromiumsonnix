@@ -99,9 +99,9 @@ def navigate_to_url():
                 else route.continue_()
             ))
             
-            # Navigate to ezconv.com first
+            # Navigate to ezconv.com first (increased timeout for slow loads)
             logging.info("Navigating to ezconv.com...")
-            page.goto("https://ezconv.com", wait_until='domcontentloaded', timeout=30000)
+            page.goto("https://ezconv.com", wait_until='domcontentloaded', timeout=60000)
             
             # Wait a bit for any dynamic content to load (reduced from 2s to 1s)
             page.wait_for_timeout(1000)
@@ -125,9 +125,9 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait for conversion to process (14 seconds - optimal time for ezconv)
-            logging.info("Waiting 14 seconds for conversion to complete...")
-            page.wait_for_timeout(14000)
+            # Wait for conversion to process (20 seconds - optimal time for ezconv)
+            logging.info("Waiting 20 seconds for conversion to complete...")
+            page.wait_for_timeout(20000)
             
             # Take a screenshot with timeout and no font waiting
             logging.info("Taking screenshot (skipping font loading)...")
