@@ -125,21 +125,30 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait EXACTLY 30 seconds - DO NOTHING, just stay on the page
+            # Wait EXACTLY 40 seconds - DO NOTHING, just stay on the page (FINAL TEST)
             import time
             start_time = time.time()
-            logging.info("⏳ STARTING 30-SECOND WAIT - Staying on ezconv.com, doing NOTHING else...")
-            page.wait_for_timeout(30000)  # Browser waits 30 seconds
+            logging.info("⏳ STARTING 40-SECOND WAIT - Staying on ezconv.com, doing NOTHING else...")
+            page.wait_for_timeout(40000)  # Browser waits 40 seconds
             elapsed_time = time.time() - start_time
-            logging.info(f"✅ 30-SECOND WAIT COMPLETE! Actual time elapsed: {elapsed_time:.2f} seconds")
+            logging.info(f"✅ 40-SECOND WAIT COMPLETE! Actual time elapsed: {elapsed_time:.2f} seconds")
+            
+            # Force a tiny wait to ensure page is fully rendered
+            page.wait_for_timeout(500)
+            
+            # Get page title to verify we're still on the page
+            page_title = page.title()
+            logging.info(f"📄 Current page title: {page_title}")
             
             # NOW take the screenshot of whatever is on the page
-            logging.info("📸 Taking screenshot NOW (after full 30 seconds)...")
+            logging.info("📸 Taking screenshot NOW (after full 40 seconds)...")
             screenshot_bytes = page.screenshot(
                 full_page=False,
-                timeout=20000  # 20 second timeout for screenshot rendering
+                timeout=20000,  # 20 second timeout for screenshot rendering
+                animations='disabled'  # Disable animations for stable screenshot
             )
-            logging.info(f"✅ Screenshot captured successfully!")
+            screenshot_size = len(screenshot_bytes)
+            logging.info(f"✅ Screenshot captured successfully! Size: {screenshot_size} bytes")
             
             # Convert screenshot to base64
             screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
