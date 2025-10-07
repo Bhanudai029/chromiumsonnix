@@ -48,41 +48,39 @@ def navigate_to_url():
         logging.info(f"Processing URL: {url} on ezconv.com")
         
         with sync_playwright() as p:
-            # Launch with aggressive memory-saving flags
+            # Launch with aggressive memory-saving flags (lowest possible footprint)
             browser = p.chromium.launch(
                 headless=True, 
                 args=[
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
+                    '--no-sandbox',
                     '--disable-gpu',
                     '--disable-software-rasterizer',
+                    '--no-zygote',  # Saves ~200MB when combined with single-process
+                    '--single-process',  # Big memory saver (safe for one tab only)
+                    '--disable-dev-tools',
                     '--disable-extensions',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--memory-pressure-off',  # Prevent memory pressure checks
                     '--disable-background-networking',
                     '--disable-sync',
                     '--disable-translate',
                     '--metrics-recording-only',
                     '--no-first-run',
-                    '--disable-background-timer-throttling',
-                    '--disable-backgrounding-occluded-windows',
-                    '--disable-renderer-backgrounding',
-                    '--single-process'  # Use single process to save memory
+                    '--disable-setuid-sandbox'
                 ]
             )
             # Create a single page context
             page = browser.new_page()
             
-            # Block unnecessary resources to save memory (images, fonts, stylesheets)
-            logging.info("Setting up resource blocking to save memory...")
-            def block_resources(route):
-                resource_type = route.request.resource_type
-                if resource_type in ['image', 'font', 'stylesheet', 'media']:
-                    logging.info(f"Blocking {resource_type}")
-                    route.abort()
-                else:
-                    route.continue_()
-            
-            page.route("**/*", block_resources)
+            # Block heavy resource types early - global route before navigation
+            logging.info("Setting up global resource blocking to save memory...")
+            page.route("**/*", lambda route: (
+                route.abort() if route.request.resource_type in ["image", "media", "font", "stylesheet"]
+                else route.continue_()
+            ))
             
             # Navigate to ezconv.com first
             logging.info("Navigating to ezconv.com...")
