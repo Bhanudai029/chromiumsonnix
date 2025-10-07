@@ -211,26 +211,37 @@
         function launchChromium() {
             const launchBtn = document.getElementById('launchBtn');
             const statusArea = document.getElementById('statusArea');
+            const screenshotContainer = document.getElementById('screenshotContainer');
+            const screenshotImg = document.getElementById('screenshot');
             
             launchBtn.disabled = true;
             launchBtn.textContent = 'Launching...';
             statusArea.className = 'status info';
-            statusArea.textContent = 'Launching Chromium...';
+            statusArea.textContent = 'Launching Chromium and navigating to ezconv.com...';
+            screenshotContainer.classList.remove('show');
             
             fetch('/launch')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
                         statusArea.className = 'status success';
-                        statusArea.textContent = '✅ Successfully launched!';
+                        statusArea.textContent = '✅ ' + data.message;
+                        
+                        // Display the screenshot
+                        if (data.screenshot) {
+                            screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
+                            screenshotContainer.classList.add('show');
+                        }
                     } else {
                         statusArea.className = 'status error';
                         statusArea.textContent = '❌ Error: ' + data.message;
+                        screenshotContainer.classList.remove('show');
                     }
                 })
                 .catch(error => {
                     statusArea.className = 'status error';
                     statusArea.textContent = '❌ Network error: ' + error.message;
+                    screenshotContainer.classList.remove('show');
                 })
                 .finally(() => {
                     launchBtn.disabled = false;
@@ -283,7 +294,7 @@
             }
             
             statusArea.className = 'status info';
-            statusArea.textContent = '🌐 Navigating to ' + url + '...';
+            statusArea.textContent = '🌐 Processing ' + url + ' on ezconv.com...';
             screenshotContainer.classList.remove('show');
             
             fetch('/navigate', {
