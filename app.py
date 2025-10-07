@@ -133,6 +133,70 @@ def navigate_to_url():
             elapsed_time = time.time() - start_time
             logging.info(f"✅ 30-second wait complete! Actual time elapsed: {elapsed_time:.2f} seconds")
             
+            # Check for download button after 30 seconds
+            download_button_found = False
+            download_button_clickable = False
+            download_button_xpath = '//*[@id="downloadButton"]'
+            
+            try:
+                logging.info("🔍 Checking for download button...")
+                download_button = page.locator(f"xpath={download_button_xpath}")
+                
+                # Check if button exists and is visible
+                if download_button.is_visible(timeout=2000):
+                    download_button_found = True
+                    logging.info("✅ Download button found and visible!")
+                    
+                    # Check if button is clickable (enabled)
+                    try:
+                        if download_button.is_enabled():
+                            download_button_clickable = True
+                            logging.info("✅ Download button is clickable!")
+                        else:
+                            logging.info("❌ Download button found but NOT clickable")
+                    except Exception as click_check_error:
+                        logging.warning(f"Error checking if button is clickable: {click_check_error}")
+                        download_button_clickable = False
+                else:
+                    logging.info("❌ Download button not visible")
+                    
+            except Exception as button_error:
+                logging.warning(f"Error checking for download button: {button_error}")
+                
+                # Try alternative XPath patterns
+                alternative_patterns = [
+                    '//button[@id="downloadButton"]',
+                    '//a[@id="downloadButton"]',
+                    '//*[contains(@class, "download")]',
+                    '//button[contains(text(), "Download")]',
+                    '//a[contains(text(), "Download")]',
+                    '//*[contains(@class, "btn-download")]'
+                ]
+                
+                logging.info("🔍 Trying alternative XPath patterns...")
+                for pattern in alternative_patterns:
+                    try:
+                        alt_button = page.locator(f"xpath={pattern}")
+                        if alt_button.is_visible(timeout=1000):
+                            download_button_found = True
+                            logging.info(f"✅ Found download button with pattern: {pattern}")
+                            
+                            # Check if clickable
+                            try:
+                                if alt_button.is_enabled():
+                                    download_button_clickable = True
+                                    logging.info("✅ Alternative download button is clickable!")
+                                else:
+                                    logging.info("❌ Alternative download button found but NOT clickable")
+                            except:
+                                download_button_clickable = False
+                            break
+                    except:
+                        continue
+                
+                if not download_button_found:
+                    logging.info("❌ No download button found with any pattern")
+            
             # NOW take the screenshot of whatever is on the page
             logging.info("📸 Taking screenshot NOW...")
             screenshot_bytes = page.screenshot(
@@ -160,16 +224,27 @@ def navigate_to_url():
                 logging.warning(f"Error closing context: {cleanup_error}")
             
             try:
-                browser.close()
+            browser.close()
                 logging.info("Browser closed, memory cleaned up")
             except Exception as cleanup_error:
                 logging.warning(f"Error closing browser: {cleanup_error}")
         
-        logging.info(f'Successfully processed {url} on youconvert.org and captured screenshot')
+        # Prepare status message based on download button findings
+        if download_button_found:
+            if download_button_clickable:
+                status_message = f'✅ SUCCESS! Download button found and clickable!'
+            else:
+                status_message = f'⚠️ Download button found but NOT clickable'
+        else:
+            status_message = f'❌ Download button NOT found'
+        
+        logging.info(f'Processed {url} on youconvert.org - Button found: {download_button_found}, Clickable: {download_button_clickable}')
         return jsonify({
             'status': 'success',
-            'message': f'Successfully processed {url} on youconvert.org',
-            'screenshot': screenshot_base64
+            'message': status_message,
+            'screenshot': screenshot_base64,
+            'download_button_found': download_button_found,
+            'download_button_clickable': download_button_clickable
         })
             
     except Exception as e:
