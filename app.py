@@ -125,9 +125,9 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait for conversion to process (12 seconds - optimal time for ezconv)
-            logging.info("Waiting 12 seconds for conversion to complete...")
-            page.wait_for_timeout(12000)
+            # Wait for conversion to process (14 seconds - optimal time for ezconv)
+            logging.info("Waiting 14 seconds for conversion to complete...")
+            page.wait_for_timeout(14000)
             
             # Take a screenshot with timeout and no font waiting
             logging.info("Taking screenshot (skipping font loading)...")

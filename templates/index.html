@@ -303,7 +303,7 @@
                 { time: 1500, message: '🔍 Locating input field...' },
                 { time: 3000, message: '✍️ Entering URL: ' + url },
                 { time: 4500, message: '🖱️ Clicking convert button...' },
-                { time: 6000, message: '⏳ Processing conversion (12 seconds)...' }
+                { time: 6000, message: '⏳ Processing conversion (14 seconds)...' }
             ];
             
             // Show step-by-step progress
@@ -313,8 +313,8 @@
                 }, s.time);
             });
             
-            // Start countdown from 12 seconds after clicking convert
-            let countdown = 12;
+            // Start countdown from 14 seconds after clicking convert
+            let countdown = 14;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
                     if (countdown > 0) {
