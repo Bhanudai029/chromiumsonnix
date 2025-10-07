@@ -95,7 +95,7 @@ def navigate_to_url():
             # Block heavy resource types early - global route before navigation
             logging.info("Setting up global resource blocking to save memory...")
             page.route("**/*", lambda route: (
-                route.abort() if route.request.resource_type in ["image", "media", "font", "stylesheet"]
+                route.abort() if route.request.resource_type in ["image", "media", "font"]
                 else route.continue_()
             ))
             
