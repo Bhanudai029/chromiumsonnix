@@ -72,12 +72,24 @@ def navigate_to_url():
             # Create a single page context
             page = browser.new_page()
             
+            # Block unnecessary resources to save memory (images, fonts, stylesheets)
+            logging.info("Setting up resource blocking to save memory...")
+            def block_resources(route):
+                resource_type = route.request.resource_type
+                if resource_type in ['image', 'font', 'stylesheet', 'media']:
+                    logging.info(f"Blocking {resource_type}")
+                    route.abort()
+                else:
+                    route.continue_()
+            
+            page.route("**/*", block_resources)
+            
             # Navigate to ezconv.com first
             logging.info("Navigating to ezconv.com...")
             page.goto("https://ezconv.com", wait_until='domcontentloaded', timeout=30000)
             
-            # Wait a bit for any dynamic content to load
-            page.wait_for_timeout(2000)
+            # Wait a bit for any dynamic content to load (reduced from 2s to 1s)
+            page.wait_for_timeout(1000)
             
             # Find and click the input box using XPath
             logging.info("Clicking on input box...")
@@ -89,8 +101,8 @@ def navigate_to_url():
             logging.info(f"Filling in URL: {url}")
             input_element.fill(url)
             
-            # Wait a moment before clicking convert
-            page.wait_for_timeout(1000)
+            # Wait a moment before clicking convert (reduced from 1s to 500ms)
+            page.wait_for_timeout(500)
             
             # Click the convert button using XPath
             logging.info("Clicking convert button...")
@@ -98,9 +110,9 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait for conversion to process (20 seconds)
-            logging.info("Waiting 20 seconds for conversion to complete...")
-            page.wait_for_timeout(20000)
+            # Wait for conversion to process (15 seconds - reduced from 20)
+            logging.info("Waiting 15 seconds for conversion to complete...")
+            page.wait_for_timeout(15000)
             
             # Take a screenshot
             screenshot_bytes = page.screenshot(full_page=False)

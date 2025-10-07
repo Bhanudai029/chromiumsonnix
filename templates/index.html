@@ -299,11 +299,11 @@
             // Start countdown after a short delay (to simulate steps)
             let step = 0;
             const steps = [
-                { time: 0, message: '🌐 Opening ezconv.com...' },
-                { time: 2000, message: '🔍 Locating input field...' },
-                { time: 4000, message: '✍️ Entering URL: ' + url },
-                { time: 6000, message: '🖱️ Clicking convert button...' },
-                { time: 8000, message: '⏳ Processing conversion (20 seconds remaining)...' }
+                { time: 0, message: '🌐 Opening ezconv.com (blocking images to save memory)...' },
+                { time: 1500, message: '🔍 Locating input field...' },
+                { time: 3000, message: '✍️ Entering URL: ' + url },
+                { time: 4500, message: '🖱️ Clicking convert button...' },
+                { time: 6000, message: '⏳ Processing conversion (15 seconds remaining)...' }
             ];
             
             // Show step-by-step progress
@@ -313,8 +313,8 @@
                 }, s.time);
             });
             
-            // Start countdown from 20 seconds after clicking convert
-            let countdown = 20;
+            // Start countdown from 15 seconds after clicking convert
+            let countdown = 15;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
                     if (countdown > 0) {
@@ -322,7 +322,7 @@
                         countdown--;
                     }
                 }, 1000);
-            }, 8000);
+            }, 6000);
             
             fetch('/navigate', {
                 method: 'POST',
