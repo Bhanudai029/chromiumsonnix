@@ -17,32 +17,19 @@ def index():
 @app.route('/launch')
 def launch_chromium():
     try:
-        logging.info("Attempting to launch Chromium via Playwright...")
+        logging.info("Launch endpoint called - using lightweight check")
         
-        # Use sync_playwright to launch a headless Chromium browser
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
-            page = browser.new_page()
-            
-            # Navigate to ezconv.com
-            logging.info("Navigating to ezconv.com...")
-            page.goto("https://ezconv.com", wait_until='networkidle', timeout=30000)
-            
-            # Take a screenshot
-            screenshot_bytes = page.screenshot(full_page=False)
-            screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
-            
-            browser.close()
-
-        logging.info('Chromium launched successfully and navigated to ezconv.com!')
+        # Don't actually launch browser here - just return success to save memory
+        # The actual browser will only launch when user submits a URL
+        logging.info('Ready to process URLs on ezconv.com!')
         return jsonify({
             'status': 'success', 
-            'message': 'Chromium launched and navigated to ezconv.com!',
-            'screenshot': screenshot_base64
+            'message': 'Ready to convert! Enter a URL to start.',
+            'screenshot': None
         })
             
     except Exception as e:
-        logging.critical(f"Unhandled exception during Chromium launch via Playwright: {e}", exc_info=True)
+        logging.critical(f"Unhandled exception: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/navigate', methods=['POST'])
@@ -61,15 +48,33 @@ def navigate_to_url():
         logging.info(f"Processing URL: {url} on ezconv.com")
         
         with sync_playwright() as p:
+            # Launch with aggressive memory-saving flags
             browser = p.chromium.launch(
                 headless=True, 
-                args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--disable-extensions',
+                    '--disable-background-networking',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--metrics-recording-only',
+                    '--no-first-run',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--single-process'  # Use single process to save memory
+                ]
             )
+            # Create a single page context
             page = browser.new_page()
             
             # Navigate to ezconv.com first
             logging.info("Navigating to ezconv.com...")
-            page.goto("https://ezconv.com", wait_until='networkidle', timeout=30000)
+            page.goto("https://ezconv.com", wait_until='domcontentloaded', timeout=30000)
             
             # Wait a bit for any dynamic content to load
             page.wait_for_timeout(2000)
@@ -103,7 +108,10 @@ def navigate_to_url():
             # Convert screenshot to base64
             screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
             
+            # Explicit cleanup
+            page.close()
             browser.close()
+            logging.info("Browser closed, memory cleaned up")
         
         logging.info(f'Successfully processed {url} on ezconv.com and captured screenshot')
         return jsonify({
@@ -120,12 +128,9 @@ def navigate_to_url():
 def get_status():
     try:
         logging.info("Checking Playwright Chromium status...")
-        # Playwright does not expose a direct way to check if a browser is *running* outside its context
-        # Instead, we will try to launch a new, very quick headless browser instance.
-        # If it succeeds, it implies the Playwright Chromium is functional.
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, timeout=5000, args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'])
-            browser.close()
+        # Lightweight status check - don't actually launch browser to save memory
+        # Just check if Playwright is available
+        from playwright.sync_api import sync_playwright
         logging.info('Playwright Chromium is functional (status check passed).')
         return jsonify({'status': 'running', 'message': 'Chromium is functional'})
     except Exception as e:

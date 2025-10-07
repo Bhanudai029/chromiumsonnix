@@ -212,12 +212,11 @@
             const launchBtn = document.getElementById('launchBtn');
             const statusArea = document.getElementById('statusArea');
             const screenshotContainer = document.getElementById('screenshotContainer');
-            const screenshotImg = document.getElementById('screenshot');
             
             launchBtn.disabled = true;
-            launchBtn.textContent = 'Launching...';
+            launchBtn.textContent = 'Checking...';
             statusArea.className = 'status info';
-            statusArea.textContent = 'Launching Chromium and navigating to ezconv.com...';
+            statusArea.textContent = 'Initializing...';
             screenshotContainer.classList.remove('show');
             
             fetch('/launch')
@@ -226,22 +225,14 @@
                     if (data.status === 'success') {
                         statusArea.className = 'status success';
                         statusArea.textContent = '✅ ' + data.message;
-                        
-                        // Display the screenshot
-                        if (data.screenshot) {
-                            screenshotImg.src = 'data:image/png;base64,' + data.screenshot;
-                            screenshotContainer.classList.add('show');
-                        }
                     } else {
                         statusArea.className = 'status error';
                         statusArea.textContent = '❌ Error: ' + data.message;
-                        screenshotContainer.classList.remove('show');
                     }
                 })
                 .catch(error => {
                     statusArea.className = 'status error';
                     statusArea.textContent = '❌ Network error: ' + error.message;
-                    screenshotContainer.classList.remove('show');
                 })
                 .finally(() => {
                     launchBtn.disabled = false;
