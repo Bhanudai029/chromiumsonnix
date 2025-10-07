@@ -125,27 +125,48 @@ def navigate_to_url():
             convert_button = page.locator(f"xpath={convert_button_xpath}")
             convert_button.click()
             
-            # Wait EXACTLY 40 seconds - DO NOTHING, just stay on the page (FINAL TEST)
+            # Wait 20 seconds initially, then check for Download button
             import time
+            logging.info("⏳ Waiting 20 seconds initially for conversion to start...")
+            page.wait_for_timeout(20000)
+            
+            # Now check for Download MP3 button every 5 seconds (max 40 seconds total)
+            download_button_xpath = "//button[normalize-space()='Download MP3']"
+            max_wait = 40  # Maximum 40 seconds total
+            check_interval = 5  # Check every 5 seconds
+            
             start_time = time.time()
-            logging.info("⏳ STARTING 40-SECOND WAIT - Staying on ezconv.com, doing NOTHING else...")
-            page.wait_for_timeout(40000)  # Browser waits 40 seconds
-            elapsed_time = time.time() - start_time
-            logging.info(f"✅ 40-SECOND WAIT COMPLETE! Actual time elapsed: {elapsed_time:.2f} seconds")
+            button_found = False
             
-            # Force a tiny wait to ensure page is fully rendered
-            page.wait_for_timeout(500)
+            logging.info("🔍 Starting to check for Download MP3 button every 5 seconds...")
             
-            # Get page title to verify we're still on the page
-            page_title = page.title()
-            logging.info(f"📄 Current page title: {page_title}")
+            for attempt in range(1, (max_wait // check_interval) + 1):
+                try:
+                    # Try to find the Download MP3 button
+                    download_button = page.locator(f"xpath={download_button_xpath}")
+                    
+                    # Check if button is visible
+                    if download_button.is_visible(timeout=100):
+                        elapsed_time = time.time() - start_time
+                        logging.info(f"✅ Download button appeared successfully! (After {20 + elapsed_time:.1f} seconds total)")
+                        button_found = True
+                        break
+                except:
+                    # Button not found yet
+                    elapsed = time.time() - start_time
+                    logging.info(f"⏳ Check #{attempt}: Download button not visible yet... (waited {elapsed:.1f}s so far)")
+                    page.wait_for_timeout(check_interval * 1000)  # Wait 5 more seconds
+            
+            if not button_found:
+                total_elapsed = time.time() - start_time
+                logging.warning(f"⚠️ Download button did not appear after {20 + total_elapsed:.1f} seconds total")
             
             # NOW take the screenshot of whatever is on the page
-            logging.info("📸 Taking screenshot NOW (after full 40 seconds)...")
+            logging.info("📸 Taking screenshot NOW...")
             screenshot_bytes = page.screenshot(
                 full_page=False,
-                timeout=20000,  # 20 second timeout for screenshot rendering
-                animations='disabled'  # Disable animations for stable screenshot
+                timeout=20000,
+                animations='disabled'
             )
             screenshot_size = len(screenshot_bytes)
             logging.info(f"✅ Screenshot captured successfully! Size: {screenshot_size} bytes")

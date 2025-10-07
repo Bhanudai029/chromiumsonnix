@@ -303,7 +303,7 @@
                 { time: 1500, message: '🔍 Locating input field...' },
                 { time: 3000, message: '✍️ Entering URL: ' + url },
                 { time: 4500, message: '🖱️ Clicking convert button...' },
-                { time: 6000, message: '⏳ Processing conversion (40 seconds - FINAL TEST)...' }
+                { time: 6000, message: '⏳ Waiting 20s, then checking for Download button...' }
             ];
             
             // Show step-by-step progress
@@ -313,13 +313,17 @@
                 }, s.time);
             });
             
-            // Start countdown from 40 seconds after clicking convert
-            let countdown = 40;
+            // Start with initial 20-second wait, then checking phase
+            let countdown = 20;
+            let checkingPhase = false;
             setTimeout(() => {
                 countdownInterval = setInterval(() => {
                     if (countdown > 0) {
                         statusArea.textContent = '⚡ Converting... ' + countdown + ' seconds remaining';
                         countdown--;
+                    } else if (!checkingPhase) {
+                        checkingPhase = true;
+                        statusArea.textContent = '🔍 Checking for Download button every 5 seconds...';
                     }
                 }, 1000);
             }, 6000);
