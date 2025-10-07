@@ -129,11 +129,11 @@ def navigate_to_url():
             logging.info("Waiting 20 seconds for conversion to complete...")
             page.wait_for_timeout(20000)
             
-            # Take a screenshot with timeout and no font waiting
-            logging.info("Taking screenshot (skipping font loading)...")
+            # Take a screenshot with increased timeout
+            logging.info("Taking screenshot...")
             screenshot_bytes = page.screenshot(
                 full_page=False,
-                timeout=5000  # 5 second timeout instead of default 30s
+                timeout=20000  # 20 second timeout for screenshot rendering
             )
             
             # Convert screenshot to base64
