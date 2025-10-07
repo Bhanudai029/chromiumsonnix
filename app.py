@@ -82,14 +82,13 @@ def navigate_to_url():
                     '--disable-setuid-sandbox'
                 ]
             )
-            # Create a single page context with animations disabled
+            # Create a single page context with optimizations
             context = browser.new_context(
                 viewport={'width': 1280, 'height': 720},
                 locale='en-US',
                 timezone_id='America/New_York',
                 # Disable animations for faster rendering
-                reduced_motion='reduce',
-                force_colors='active'
+                reduced_motion='reduce'
             )
             page = context.new_page()
             
