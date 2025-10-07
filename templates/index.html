@@ -265,8 +265,7 @@
                 document.body.classList.remove('dark-mode');
             }
             // Initialize buttons and status area after loading preference
-            launchChromium(); // Or just update the initial state if needed
-            checkStatus(); // Initial status check
+            // Don't auto-check on load to avoid interfering with conversion messages
         };
 
         function launchChromium() {
@@ -329,8 +328,28 @@
                 });
         }
 
-        // Auto-check status every 30 seconds
-        setInterval(checkStatus, 30000);
+        // Auto-check status every 30 seconds (but not during conversion)
+        let statusCheckInterval = null;
+        let isConverting = false;
+        
+        function startStatusChecking() {
+            if (!statusCheckInterval && !isConverting) {
+                statusCheckInterval = setInterval(() => {
+                    if (!isConverting) {
+                        checkStatus();
+                    }
+                }, 30000);
+            }
+        }
+        
+        function stopStatusChecking() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+            }
+        }
+        
+        startStatusChecking();
 
         let countdownInterval = null;
 
@@ -346,6 +365,10 @@
                 statusArea.textContent = '❌ Please enter a URL';
                 return;
             }
+
+            // Set converting flag and stop status checking
+            isConverting = true;
+            stopStatusChecking();
 
             // Clear any existing countdown
             if (countdownInterval) {
@@ -458,11 +481,13 @@
                             setTimeout(() => {
                                 statusArea.classList.add('fading');
                                 
-                                // After fade completes, show "Chromium is running" status
+                                // After fade completes, show "Chromium is running" status and resume status checking
                                 setTimeout(() => {
                                     statusArea.classList.remove('fade-out', 'fading');
                                     statusArea.className = 'status success';
                                     statusArea.textContent = '✅ Chromium is running';
+                                    isConverting = false;
+                                    startStatusChecking();
                                 }, 2000);
                             }, 100);
                         }, 18000); // Show for 18 seconds before starting fade
@@ -471,6 +496,8 @@
                         statusArea.className = 'status error';
                         statusArea.textContent = '❌ Error: ' + data.message;
                         screenshotContainer.classList.remove('show');
+                        isConverting = false;
+                        startStatusChecking();
                     }
                 })
                 .catch(error => {
@@ -485,6 +512,8 @@
                     statusArea.className = 'status error';
                     statusArea.textContent = '❌ Network error: ' + error.message;
                     screenshotContainer.classList.remove('show');
+                    isConverting = false;
+                    startStatusChecking();
                 });
         }
 
